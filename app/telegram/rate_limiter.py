@@ -1,5 +1,5 @@
 import asyncio
-from typing import Callable
+from typing import Awaitable, Callable
 
 from app.utils.logger import logger
 
@@ -38,7 +38,7 @@ class RateLimiterQueue:
             self._task.cancel()
             self._task = None
 
-    async def add_request(self, request: Callable[[], asyncio.Future]):
+    async def add_request(self, request: Callable[[], Awaitable[None]]):
         """
         Adds a request function to the queue.
 
