@@ -3,6 +3,7 @@ import asyncio
 from dotenv import load_dotenv
 
 from app.analysis.fundamentals.analyzer import FundamentalAnalyzer
+from app.analysis.sentiment.analyzer import SentimentAnalyzer
 from app.telegram.bot import TelegramBot
 from app.telegram.rate_limiter import RateLimiterQueue
 
@@ -11,8 +12,11 @@ async def main():
     load_dotenv()
     fundamental_analyzer = FundamentalAnalyzer(
         api_key=os.getenv("FINNHUB_API_KEY"))
-    rate_limiter = RateLimiterQueue(
-        rate=30, per=1, buffer=0.05)  # 30 requests per second with a buffer of 0.2 seconds
+    sentiment_analyzer = SentimentAnalyzer(
+        api_key=os.getenv("FINNHUB_API_KEY"),
+    )
+    sentiment = sentiment_analyzer.get_insider_sentiment("NVDA")
+    rate_limiter = RateLimiterQueue(rate=30, per=1, buffer=0.05)
     telegaram_bot = TelegramBot(rate_limiter, fundamental_analyzer)
 
     rate_limiter.start()
