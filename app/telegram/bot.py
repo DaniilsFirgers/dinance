@@ -46,36 +46,25 @@ class TelegramBot:
 
     async def receive_ticker(self, message: types.Message, state: FSMContext):
         symbol = message.text.strip()
+        await self.rate_limiter.add_request(lambda: message.answer(f"Processing received <b>{symbol}</b> ticker.", parse_mode="HTML"))
         try:
             metrics = self.fundamental_analyzer.get_all_metrics(symbol)
         except ValueError as ve:
-            await message.answer(ve)
+            await self.rate_limiter.add_request(lambda: message.answer(ve))
             return
         msg = self.fundamental_analyzer.format_telegram_msg(metrics)
-        await self.send_text_msg_with_limiter(msg, message.from_user.id)
+        await self.rate_limiter.add_request(lambda: message.answer(msg, parse_mode="HTML"))
         await state.clear()
 
     async def ping(self, message: types.Message):
         """Handles the /ping command."""
         text = "Bots is active! ✅"
-        await self.send_text_msg_with_limiter(text, message.from_user.id)
+        await self.rate_limiter.add_request(lambda: message.answer(text))
 
     async def handle_start(self, message: types.Message):
         """Handles the /start command."""
         text = "Hello! I am a bot that will help you to perform stock analysis."
-        await self.send_text_msg_with_limiter(text, message.from_user.id)
-
-    async def send_text_msg_with_limiter(self, message: str, tg_user_id: int):
-        """Sends a message to the user."""
-        await self.rate_limiter.add_request(lambda: self._send_text_message(message, tg_user_id))
-
-    async def _send_text_message(self, message: str, tg_user_id: int):
-        """Sends a message to the user."""
-        await self.bot.send_message(
-            chat_id=tg_user_id,
-            text=message,
-            parse_mode="HTML"
-        )
+        await self.rate_limiter.add_request(lambda: message.answer(text))
 
     async def start_polling(self):
         """Start an asyncio task to poll the bot."""
