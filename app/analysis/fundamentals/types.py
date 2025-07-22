@@ -163,3 +163,7 @@ class FinnhubMetricsResponse(BaseModel):
 
     class Config:
         populate_by_name = True  # Allows using the field name instead of the alias
+
+
+class CompanyFinancialsResponse(BaseModel):
+    metric: FinnhubMetricsResponse
