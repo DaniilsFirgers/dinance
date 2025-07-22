@@ -46,7 +46,11 @@ class TelegramBot:
 
     async def receive_ticker(self, message: types.Message, state: FSMContext):
         symbol = message.text.strip()
-        metrics = self.fundamental_analyzer.get_all_metrics(symbol)
+        try:
+            metrics = self.fundamental_analyzer.get_all_metrics(symbol)
+        except ValueError as ve:
+            await message.answer(ve)
+            return
         msg = self.fundamental_analyzer.format_telegram_msg(metrics)
         await self.send_text_msg_with_limiter(msg, message.from_user.id)
         await state.clear()

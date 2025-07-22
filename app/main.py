@@ -11,8 +11,6 @@ async def main():
     load_dotenv()
     fundamental_analyzer = FundamentalAnalyzer(
         api_key=os.getenv("FINNHUB_API_KEY"))
-    print(os.getenv("FINNHUB_API_KEY"))
-    print(os.getenv("TELEGRAM_BOT_TOKEN"))
     rate_limiter = RateLimiterQueue(
         rate=30, per=1, buffer=0.2)  # 30 requests per second with a buffer of 0.2 seconds
     telegaram_bot = TelegramBot(rate_limiter, fundamental_analyzer)

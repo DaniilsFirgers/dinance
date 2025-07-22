@@ -1,10 +1,13 @@
 import finnhub
 from pydantic import ValidationError
 from app.analysis.fundamentals.types import FinnhubMetricsResponse
+from app.utils.logger import logger
 
 
 class FundamentalAnalyzer:
     def __init__(self, api_key: str):
+        if not api_key:
+            raise ValueError("FINNHUB_API_KEY is not set")
         self.client = finnhub.Client(api_key=api_key)
 
     def _fetch_metrics(self, symbol: str) -> FinnhubMetricsResponse:
@@ -12,12 +15,14 @@ class FundamentalAnalyzer:
             response = self.client.company_basic_financials(
                 symbol.upper(), 'all')
             metric_data = response.get("metric", {})
+            if not metric_data:
+                raise ValueError(f"No metrics found for symbol: {symbol}")
             return FinnhubMetricsResponse(**metric_data)
         except ValidationError as ve:
-            print(f"[VALIDATION ERROR] {ve}")
+            logger.error(f"Validation error for symbol {symbol}: {ve}")
             return FinnhubMetricsResponse()
         except Exception as e:
-            print(f"[ERROR] Failed to fetch metrics for {symbol}: {e}")
+            logger.error(f"Error fetching metrics for symbol {symbol}: {e}")
             return FinnhubMetricsResponse()
 
     def get_profitability_metrics(self, metrics: FinnhubMetricsResponse) -> dict:
@@ -80,30 +85,71 @@ class FundamentalAnalyzer:
         }
 
     def format_telegram_msg(self, metrics: dict) -> str:
-        msg = "📊 <b>Fundamental Analysis</b>\n"
+        msg = ""
 
-        msg += "\n<b>📈 Profitability</b>\n"
-        msg += f"• Net Profit Margin: {metrics['profitability']['net_profit_margin_ttm']:.2f}%\n"
-        msg += f"• Gross Margin: {metrics['profitability']['gross_margin_ttm']:.2f}%\n"
-        msg += f"• Operating Margin: {metrics['profitability']['operating_margin_ttm']:.2f}%\n"
-        msg += f"• ROE (Return on Equity): {metrics['profitability']['roe_ttm']:.2f}%\n"
-        msg += f"• ROA (Return on Assets): {metrics['profitability']['roa_ttm']:.2f}%\n"
+        def format_line(label: str, value, suffix: str = "", precision: int = 2) -> str:
+            if value is None:
+                return ""
+            return f"• {label}: {value:.{precision}f}{suffix}\n"
 
-        msg += "\n<b>📊 Growth</b>\n"
-        msg += f"• EPS Growth (5Y): {metrics['growth']['eps_growth_5y']:.2f}%\n"
-        msg += f"• Revenue Growth (5Y): {metrics['growth']['revenue_growth_5y']:.2f}%\n"
-        msg += f"• Free Cash Flow CAGR (5Y): {metrics['growth']['focf_cagr_5y']:.2f}%\n"
+        # Profitability
+        profitability = ""
+        profitability += format_line("Net Profit Margin",
+                                     metrics['profitability']['net_profit_margin_ttm'], "%")
+        profitability += format_line("Gross Margin",
+                                     metrics['profitability']['gross_margin_ttm'], "%")
+        profitability += format_line("Operating Margin",
+                                     metrics['profitability']['operating_margin_ttm'], "%")
+        profitability += format_line("ROE (Return on Equity)",
+                                     metrics['profitability']['roe_ttm'], "%")
+        profitability += format_line("ROA (Return on Assets)",
+                                     metrics['profitability']['roa_ttm'], "%")
+        if profitability:
+            msg += "\n<b>📈 Profitability</b>\n" + profitability
 
-        msg += "\n<b>💰 Valuation</b>\n"
-        msg += f"• P/B Ratio: {metrics['valuation']['pb_quarterly']:.2f}x\n"
-        msg += f"• P/S Ratio: {metrics['valuation']['ps_ttm']:.2f}x\n"
+        # Growth
+        growth = ""
+        growth += format_line("EPS Growth (5Y)",
+                              metrics['growth']['eps_growth_5y'], "%")
+        growth += format_line("Revenue Growth (5Y)",
+                              metrics['growth']['revenue_growth_5y'], "%")
+        growth += format_line("Free Cash Flow CAGR (5Y)",
+                              metrics['growth']['focf_cagr_5y'], "%")
+        growth += format_line("EBITDA CAGR (5Y)",
+                              metrics['growth'].get('ebitda_cagr_5y'), "%")
+        if growth:
+            msg += "\n<b>📊 Growth</b>\n" + growth
 
-        msg += "\n<b>💧 Liquidity</b>\n"
-        msg += f"• Current Ratio: {metrics['liquidity']['current_ratio_quarterly']:.2f}\n"
-        msg += f"• Quick Ratio: {metrics['liquidity']['quick_ratio_quarterly']:.2f}\n"
+        # Valuation
+        valuation = ""
+        valuation += format_line("P/B Ratio",
+                                 metrics['valuation']['pb_quarterly'], "x")
+        valuation += format_line("P/S Ratio",
+                                 metrics['valuation']['ps_ttm'], "x")
+        if valuation:
+            msg += "\n<b>💰 Valuation</b>\n" + valuation
 
-        msg += "\n<b>⚖️ Leverage</b>\n"
-        msg += f"• Debt/Equity: {metrics['leverage']['debt_to_equity_quarterly']:.2f}\n"
-        msg += f"• Interest Coverage: {metrics['leverage']['interest_coverage_ttm']:.2f}x\n"
+        # Liquidity
+        liquidity = ""
+        liquidity += format_line("Current Ratio",
+                                 metrics['liquidity']['current_ratio_quarterly'])
+        liquidity += format_line("Quick Ratio",
+                                 metrics['liquidity']['quick_ratio_quarterly'])
+        if liquidity:
+            msg += "\n<b>💧 Liquidity</b>\n" + liquidity
+
+        # Leverage
+        leverage = ""
+        leverage += format_line("Debt/Equity",
+                                metrics['leverage']['debt_to_equity_quarterly'])
+        leverage += format_line("Interest Coverage",
+                                metrics['leverage']['interest_coverage_ttm'], "x")
+        if leverage:
+            msg += "\n<b>⚖️ Leverage</b>\n" + leverage
+
+        if msg:
+            msg = "📊 <b>Fundamental Analysis</b>\n" + msg
+        else:
+            msg = "No metrics found for the provided symbol."
 
         return msg.strip()
