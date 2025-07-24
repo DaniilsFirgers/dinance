@@ -32,6 +32,8 @@ class InsiderSentimentMessage(BaseModel):
     latest: LatestSentiment
     delta: float
 
+##### API response #####
+
 
 class InsiderSentimentData(BaseModel):
     symbol: str
@@ -44,3 +46,6 @@ class InsiderSentimentData(BaseModel):
 class FinnhubInsiderSentimentResponse(BaseModel):
     data: List[InsiderSentimentData]
     symbol: str
+
+
+#####################
