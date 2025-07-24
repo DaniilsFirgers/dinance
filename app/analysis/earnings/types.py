@@ -6,6 +6,15 @@ import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
+class EarningsInfo(BaseModel):
+    symbol: str
+    date: datetime.date
+    eps_actual: float
+    eps_estimate: float
+    revenue_surprise: Optional[float] = None
+    eps_surprise: Optional[float] = None
+
+
 class EarningsCallTime(str, Enum):
     BEFORE_MARKET_OPEN = "bmo"
     AFTER_MARKET_CLOSE = "amc"
