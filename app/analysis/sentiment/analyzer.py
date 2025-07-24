@@ -12,7 +12,7 @@ class SentimentAnalyzer:
             raise ValueError("FINNHUB_API_KEY is not set")
         self.client = finnhub.Client(api_key=api_key)
 
-    def get_insider_sentiment(self, symbol: str) -> Optional[float]:
+    def get_insider_sentiment(self, symbol: str):
         today = dt.date.today()
         one_year_ago = today - dt.timedelta(days=365)
 

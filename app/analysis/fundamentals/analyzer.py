@@ -1,5 +1,5 @@
 import finnhub
-from typing import Optional, Any
+from typing import Any
 
 from pydantic import ValidationError
 from app.analysis.fundamentals.types import CompanyFinancialsResponse, FinnhubMetricsResponse
@@ -71,66 +71,3 @@ class FundamentalAnalyzer:
             "liquidity": self.get_liquidity_metrics(metrics),
             "leverage": self.get_leverage_metrics(metrics),
         }
-
-    def format_telegram_msg(self, metrics: dict) -> str:
-        msg = ""
-
-        def format_line(label: str, value: Optional[float], suffix: str = "", precision: int = 2) -> str:
-            if value is None:
-                return ""
-            try:
-                return f"• {label}: {float(value):.{precision}f}{suffix}\n"
-            except (TypeError, ValueError):
-                return ""
-
-        sections = {
-            "📈 Profitability": [
-                ("Net Profit Margin", metrics["profitability"].get(
-                    "net_profit_margin_ttm"), "%"),
-                ("Gross Margin", metrics["profitability"].get(
-                    "gross_margin_ttm"), "%"),
-                ("Operating Margin", metrics["profitability"].get(
-                    "operating_margin_ttm"), "%"),
-                ("ROE (Return on Equity)",
-                 metrics["profitability"].get("roe_ttm"), "%"),
-                ("ROA (Return on Assets)",
-                 metrics["profitability"].get("roa_ttm"), "%"),
-            ],
-            "📊 Growth": [
-                ("EPS Growth (5Y)", metrics["growth"].get(
-                    "eps_growth_5y"), "%"),
-                ("Revenue Growth (5Y)", metrics["growth"].get(
-                    "revenue_growth_5y"), "%"),
-                ("Free Cash Flow CAGR (5Y)",
-                 metrics["growth"].get("focf_cagr_5y"), "%"),
-                ("EBITDA CAGR (5Y)", metrics["growth"].get(
-                    "ebitda_cagr_5y"), "%"),
-            ],
-            "💰 Valuation": [
-                ("P/B Ratio", metrics["valuation"].get("pb_quarterly"), "x"),
-                ("P/S Ratio", metrics["valuation"].get("ps_ttm"), "x"),
-            ],
-            "💧 Liquidity": [
-                ("Current Ratio", metrics["liquidity"].get(
-                    "current_ratio_quarterly")),
-                ("Quick Ratio", metrics["liquidity"].get(
-                    "quick_ratio_quarterly")),
-            ],
-            "⚖️ Leverage": [
-                ("Debt/Equity",
-                 metrics["leverage"].get("debt_to_equity_quarterly")),
-                ("Interest Coverage", metrics["leverage"].get(
-                    "interest_coverage_ttm"), "x"),
-            ],
-        }
-
-        for section, items in sections.items():
-            section_text = ""
-            for item in items:
-                label, value = item[0], item[1]
-                suffix = item[2] if len(item) > 2 else ""
-                section_text += format_line(label, value, suffix)
-            if section_text:
-                msg += f"\n<b>{section}</b>\n{section_text}"
-
-        return msg.strip() if msg else "No metrics found for the provided symbol."

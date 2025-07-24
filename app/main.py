@@ -15,9 +15,10 @@ async def main():
     sentiment_analyzer = SentimentAnalyzer(
         api_key=os.getenv("FINNHUB_API_KEY"),
     )
-    sentiment = sentiment_analyzer.get_insider_sentiment("NVDA")
-    rate_limiter = RateLimiterQueue(rate=30, per=1, buffer=0.05)
-    telegaram_bot = TelegramBot(rate_limiter, fundamental_analyzer)
+
+    rate_limiter = RateLimiterQueue(rate=30, per=1, buffer=0.02)
+    telegaram_bot = TelegramBot(
+        rate_limiter, fundamental_analyzer, sentiment_analyzer)
 
     rate_limiter.start()
     # Run bot in a separate task

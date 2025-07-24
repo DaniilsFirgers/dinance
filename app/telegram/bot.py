@@ -1,5 +1,7 @@
 import os
 import asyncio
+import datetime as dt
+from typing import Optional
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
@@ -8,6 +10,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
 from app.analysis.fundamentals.analyzer import FundamentalAnalyzer
+from app.analysis.sentiment.analyzer import SentimentAnalyzer
+from app.analysis.sentiment.types import InsiderSentimentMessage
 from app.telegram.rate_limiter import RateLimiterQueue
 from app.utils.logger import logger
 
@@ -17,12 +21,13 @@ class CheckTicker(StatesGroup):
 
 
 class TelegramBot:
-    def __init__(self, rate_limiter: RateLimiterQueue, fundamental_analyzer: FundamentalAnalyzer):
+    def __init__(self, rate_limiter: RateLimiterQueue, fundamental_analyzer: FundamentalAnalyzer, sentiment_analyzer: SentimentAnalyzer):
         self.token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.bot = Bot(token=self.token)
         self.dp = Dispatcher()
         self.rate_limiter = rate_limiter
         self.fundamental_analyzer = fundamental_analyzer
+        self.sentiment_analyzer = sentiment_analyzer
 
         self.dp.message.register(self.handle_start, Command("start"))
         self.dp.message.register(self.ping, Command("ping"))
@@ -46,15 +51,97 @@ class TelegramBot:
 
     async def receive_ticker(self, message: types.Message, state: FSMContext):
         symbol = message.text.strip()
-        await self.rate_limiter.add_request(lambda: message.answer(f"Processing received <b>{symbol}</b> ticker.", parse_mode="HTML"))
+        await self.answer(message, f"Processing received <b>{symbol}</b> ticker.")
+
         try:
             metrics = self.fundamental_analyzer.get_all_metrics(symbol)
         except ValueError as ve:
-            await self.rate_limiter.add_request(lambda: message.answer(ve))
-            return
-        msg = self.fundamental_analyzer.format_telegram_msg(metrics)
-        await self.rate_limiter.add_request(lambda: message.answer(msg, parse_mode="HTML"))
+            return await self.rate_limiter.add_request(lambda: message.answer(ve))
+
+        try:
+            sentiment = self.sentiment_analyzer.get_insider_sentiment(symbol)
+        except ValueError as ve:
+            return await self.rate_limiter.add_request(lambda: message.answer(ve))
+
+        await self.answer(message, self.format_analysis_msg(metrics, sentiment))
         await state.clear()
+
+    async def answer(self, message: types.Message, text: str):
+        """Send a message with rate limiting."""
+        await self.rate_limiter.add_request(lambda: message.answer(text, parse_mode="HTML"))
+
+    def format_analysis_msg(self, metrics: dict, sentiment: Optional[InsiderSentimentMessage]):
+        msg = ""
+
+        def format_line(label: str, value: Optional[float], suffix: str = "", precision: int = 2) -> str:
+            if value is None:
+                return ""
+            try:
+                return f"• {label}: {float(value):.{precision}f}{suffix}\n"
+            except (TypeError, ValueError):
+                return ""
+
+        sections = {
+            "📈 Profitability": [
+                ("Net Profit Margin", metrics["profitability"].get(
+                    "net_profit_margin_ttm"), "%"),
+                ("Gross Margin", metrics["profitability"].get(
+                    "gross_margin_ttm"), "%"),
+                ("Operating Margin", metrics["profitability"].get(
+                    "operating_margin_ttm"), "%"),
+                ("ROE (Return on Equity)",
+                 metrics["profitability"].get("roe_ttm"), "%"),
+                ("ROA (Return on Assets)",
+                 metrics["profitability"].get("roa_ttm"), "%"),
+            ],
+            "📊 Growth": [
+                ("EPS Growth (5Y)", metrics["growth"].get(
+                    "eps_growth_5y"), "%"),
+                ("Revenue Growth (5Y)", metrics["growth"].get(
+                    "revenue_growth_5y"), "%"),
+                ("Free Cash Flow CAGR (5Y)",
+                 metrics["growth"].get("focf_cagr_5y"), "%"),
+                ("EBITDA CAGR (5Y)", metrics["growth"].get(
+                    "ebitda_cagr_5y"), "%"),
+            ],
+            "💰 Valuation": [
+                ("P/B Ratio", metrics["valuation"].get("pb_quarterly"), "x"),
+                ("P/S Ratio", metrics["valuation"].get("ps_ttm"), "x"),
+            ],
+            "💧 Liquidity": [
+                ("Current Ratio", metrics["liquidity"].get(
+                    "current_ratio_quarterly")),
+                ("Quick Ratio", metrics["liquidity"].get(
+                    "quick_ratio_quarterly")),
+            ],
+            "⚖️ Leverage": [
+                ("Debt/Equity",
+                 metrics["leverage"].get("debt_to_equity_quarterly")),
+                ("Interest Coverage", metrics["leverage"].get(
+                    "interest_coverage_ttm"), "x"),
+            ],
+        }
+
+        for section, items in sections.items():
+            section_text = ""
+            for item in items:
+                label, value = item[0], item[1]
+                suffix = item[2] if len(item) > 2 else ""
+                section_text += format_line(label, value, suffix)
+            if section_text:
+                msg += f"\n<b>{section}</b>\n{section_text}"
+
+        # check if the latest sentiment is at most 3 months old
+
+        if sentiment and (dt.datetime.now() - sentiment.latest.date) <= dt.timedelta(days=90):
+            msg += "\n<b>📊 Insider Sentiment</b>\n"
+            msg += format_line(f"MSPR ({sentiment.latest.date.strftime('%Y-%m')})",
+                               sentiment.latest.mspr, precision=1)
+            msg += format_line(f"Avg MSPR ({sentiment.avg.from_date.strftime('%Y-%m')} - {sentiment.avg.to_date.strftime('%Y-%m')})",
+                               sentiment.avg.mspr, precision=1)
+            msg += f"Trend: <b>{sentiment.latest.trend}</b>\n"
+
+        return msg.strip() if msg else "No metrics found for the provided symbol."
 
     async def ping(self, message: types.Message):
         """Handles the /ping command."""
