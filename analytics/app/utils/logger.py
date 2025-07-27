@@ -32,12 +32,6 @@ sqlalchemy_logger.setLevel(logging.WARNING)
 sqlalchemy_logger.propagate = False  # prevent from propagating to root logger
 sqlalchemy_logger.handlers.clear()
 
-# hand;e pyvips logs
-pyvips_logger = logging.getLogger("pyvips")
-pyvips_logger.setLevel(logging.WARNING)
-pyvips_logger.propagate = False
-pyvips_logger.handlers.clear()
-
 logger = logging.getLogger(__name__)
 
 error_log_path = os.path.join("logs", "error.log")

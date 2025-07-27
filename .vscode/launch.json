@@ -2,12 +2,13 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python: Module Launch",
+      "name": "Analytics module",
       "type": "python",
       "request": "launch",
       "module": "app.main",
       "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env"
+      "cwd": "${workspaceFolder}/analytics",
+      "envFile": "${workspaceFolder}/analytics/.env"
     }
   ]
 }

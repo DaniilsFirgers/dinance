@@ -2,7 +2,7 @@ from typing import List
 import finnhub
 import datetime as dt
 
-from app.analysis.earnings.types import EarningsCalendarItem, EarningsCalendarResponse, EarningsInfo
+from app.core.earnings.types import EarningsCalendarItem, EarningsCalendarResponse, EarningsInfo
 
 
 class EarningsAnalyzer:

@@ -2,10 +2,10 @@ import os
 import asyncio
 from dotenv import load_dotenv
 
-from app.analysis.fundamentals.analyzer import FundamentalAnalyzer
-from app.analysis.sentiment.analyzer import SentimentAnalyzer
-from app.analysis.earnings.analyzer import EarningsAnalyzer
+from app.core.fundamentals.analyzer import FundamentalAnalyzer
+from app.core.sentiment.analyzer import SentimentAnalyzer
 from app.telegram.bot import TelegramBot
+from app.message_bus.rabbitmq import MessageBus
 from app.telegram.rate_limiter import RateLimiterQueue
 
 
@@ -17,11 +17,11 @@ async def main():
         api_key=os.getenv("FINNHUB_API_KEY"),
     )
 
-    earnings_calendar = EarningsAnalyzer(
-        api_key=os.getenv("FINNHUB_API_KEY"))
-
-    earnings_calendar.check_calendar()
-
+    message_bus = MessageBus(
+        amqp_url="amqp://guest:guest@localhost/",
+        request_queue="tasks",
+        response_queue="results"
+    )
     rate_limiter = RateLimiterQueue(rate=30, per=1, buffer=0.02)
     telegaram_bot = TelegramBot(
         rate_limiter, fundamental_analyzer, sentiment_analyzer)

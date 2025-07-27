@@ -9,9 +9,9 @@ from aiogram.types import BotCommand
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 
-from app.analysis.fundamentals.analyzer import FundamentalAnalyzer
-from app.analysis.sentiment.analyzer import SentimentAnalyzer
-from app.analysis.sentiment.types import InsiderSentimentMessage
+from app.core.fundamentals.analyzer import FundamentalAnalyzer
+from app.core.sentiment.analyzer import SentimentAnalyzer
+from app.core.sentiment.types import InsiderSentimentMessage
 from app.telegram.rate_limiter import RateLimiterQueue
 from app.utils.logger import logger
 

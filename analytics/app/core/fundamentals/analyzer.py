@@ -2,7 +2,7 @@ import finnhub
 from typing import Any
 
 from pydantic import ValidationError
-from app.analysis.fundamentals.types import CompanyFinancialsResponse, FinnhubMetricsResponse
+from app.core.fundamentals.types import CompanyFinancialsResponse, FinnhubMetricsResponse
 from app.utils.logger import logger
 
 

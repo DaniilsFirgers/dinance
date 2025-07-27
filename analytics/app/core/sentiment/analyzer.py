@@ -2,7 +2,7 @@ import datetime as dt
 from typing import Optional
 import finnhub
 
-from app.analysis.sentiment.types import AvgSentiment, FinnhubInsiderSentimentResponse, InsiderSentimentMessage, InsiderSentimentTrend, LatestSentiment
+from app.core.sentiment.types import AvgSentiment, FinnhubInsiderSentimentResponse, InsiderSentimentMessage, InsiderSentimentTrend, LatestSentiment
 from app.utils.logger import logger
 
 
