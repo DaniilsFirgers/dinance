@@ -22,20 +22,21 @@ async def main():
         request_queue="tasks",
         response_queue="results"
     )
+
     rate_limiter = RateLimiterQueue(rate=30, per=1, buffer=0.02)
-    telegaram_bot = TelegramBot(
-        rate_limiter, fundamental_analyzer, sentiment_analyzer)
+    # telegaram_bot = TelegramBot(
+    #     rate_limiter, fundamental_analyzer, sentiment_analyzer)
 
-    rate_limiter.start()
+    # rate_limiter.start()
     # Run bot in a separate task
-    polling_task = asyncio.create_task(telegaram_bot.start_polling())
+    # polling_task = asyncio.create_task(telegaram_bot.start_polling())
 
-    try:
-        await polling_task
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        print("Shutting down bot...")
-    finally:
-        await telegaram_bot.bot.session.close()  # 👈 Properly close aiohttp session
+    # try:
+    #     await polling_task
+    # except (KeyboardInterrupt, asyncio.CancelledError):
+    #     print("Shutting down bot...")
+    # finally:
+    #     await telegaram_bot.bot.session.close()  # 👈 Properly close aiohttp session
 
 
 if __name__ == "__main__":
