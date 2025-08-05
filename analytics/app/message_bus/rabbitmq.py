@@ -44,12 +44,3 @@ class MessageBus:
             f"Connected to RabbitMQ at {self.amqp_url}. Listening for messages on queue '{self.request_queue.name}'.")
         await self.request_queue.consume(self.process_message)
         await asyncio.Future()
-
-
-if __name__ == "__main__":
-    worker = MessageBus(
-        amqp_url="amqp://guest:guest@localhost/",
-        request_queue="tasks",
-        response_queue="results"
-    )
-    asyncio.run(worker.run())
