@@ -1,13 +1,15 @@
 package finnhub
 
 import (
-	"broker/configs"
+	"broker/internal/config"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/robfig/cron/v3"
 
 	finnhub "github.com/Finnhub-Stock-API/finnhub-go/v2"
 )
@@ -17,15 +19,25 @@ const (
 )
 
 type FinnhubClient struct {
-	Client *finnhub.DefaultApiService
+	Client        *finnhub.DefaultApiService
+	TickersConfig *config.Tickers
 }
 
-func (f FinnhubClient) GetCompanyNews(config configs.Tickers) error {
+func (f FinnhubClient) Run(cron *cron.Cron) error {
+	cron.AddFunc("@every 10s", func() {
+		if err := f.GetCompanyNews(); err != nil {
+			log.Println("Error fetching company news:", err)
+		}
+	})
+	return nil
+}
+
+func (f FinnhubClient) GetCompanyNews() error {
 	var wg sync.WaitGroup
 	from := time.Now().Format(REQUEST_DATE_FORMAT)
 	to := time.Now().Format(REQUEST_DATE_FORMAT)
 
-	for _, symbol := range config.Tickers {
+	for _, symbol := range f.TickersConfig.Tickers {
 		wg.Add(1)
 		go func(sym string) {
 			defer wg.Done()
