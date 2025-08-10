@@ -2,7 +2,11 @@ module broker
 
 go 1.20
 
-require github.com/Finnhub-Stock-API/finnhub-go/v2 v2.0.19
+require (
+	github.com/BurntSushi/toml v1.5.0
+	github.com/Finnhub-Stock-API/finnhub-go/v2 v2.0.19
+	github.com/robfig/cron/v3 v3.0.1
+)
 
 require (
 	github.com/golang/protobuf v1.4.2 // indirect
