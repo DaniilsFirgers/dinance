@@ -5,8 +5,9 @@ import (
 	"broker/internal/config"
 	"log"
 
+	cron "broker/internal/cron"
+
 	finnhub_api "github.com/Finnhub-Stock-API/finnhub-go/v2"
-	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -24,7 +25,7 @@ func main() {
 	}
 
 	// Initialize the cron scheduler and start it
-	cron := cron.New(cron.WithSeconds())
+	cron := cron.New()
 	cron.Start()
 
 	finnhub_cfg := finnhub_api.NewConfiguration()

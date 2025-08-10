@@ -3,13 +3,12 @@ package finnhub
 import (
 	"broker/internal/config"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"sync"
 	"time"
 
-	"github.com/robfig/cron/v3"
+	cron "broker/internal/cron"
 
 	finnhub "github.com/Finnhub-Stock-API/finnhub-go/v2"
 )
@@ -24,7 +23,7 @@ type FinnhubClient struct {
 }
 
 func (f FinnhubClient) Run(cron *cron.Cron) error {
-	cron.AddFunc("@every 10s", func() {
+	cron.AddFunc("finnhub-company-news", "@every 10s", func() {
 		if err := f.GetCompanyNews(); err != nil {
 			log.Println("Error fetching company news:", err)
 		}
@@ -46,12 +45,7 @@ func (f FinnhubClient) GetCompanyNews() error {
 				fmt.Printf("Error fetching news for %s: %v\n", sym, err)
 				return
 			}
-			jsonBytes, err := json.MarshalIndent(res, "", "  ")
-			if err != nil {
-				log.Println("Error marshaling:", err)
-			} else {
-				fmt.Println(string(jsonBytes))
-			}
+			fmt.Printf("Length of news for %s: %d\n", sym, len(res))
 		}(symbol)
 	}
 	wg.Wait()
