@@ -13,9 +13,10 @@ type Cron struct {
 }
 
 func New() *Cron {
-	// Enable seconds precision
 	return &Cron{
-		cron: cron.New(cron.WithSeconds()),
+		cron: cron.New(cron.WithSeconds(), cron.WithChain(
+			cron.SkipIfStillRunning(cron.DefaultLogger),
+		)),
 	}
 }
 
@@ -30,10 +31,10 @@ func (c *Cron) Stop() context.Context {
 func (c *Cron) AddFunc(name string, spec string, cmd func()) (cron.EntryID, error) {
 	wrappedCmd := func() {
 		start := time.Now()
-		log.Printf("[Cron Job %s] started at %s", name, start.Format(time.RFC3339))
+		log.Printf("%s started at %s", name, start.Format(time.RFC3339))
 		cmd()
 		duration := time.Since(start)
-		log.Printf("[Cron Job %s] finished in %s", name, duration)
+		log.Printf("%s finished in %s", name, duration)
 	}
 
 	return c.cron.AddFunc(spec, wrappedCmd)
