@@ -1,22 +1,49 @@
 package yahoo
 
 import (
+	"broker/internal/config"
+	cron "broker/internal/cron"
+	"sync"
+
 	httpclient "broker/internal/http-client"
 	"encoding/json"
-	"fmt"
 	"log"
 )
 
-func GetQuote(symbol string) (string, error) {
-	headers := map[string]string{
-		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36",
-		"Accept":          "application/json, text/javascript, */*; q=0.01",
-		"Accept-Language": "en-US,en;q=0.9",
-		"Referer":         "https://finance.yahoo.com/",
-		"Connection":      "keep-alive",
-	}
+type YahooClient struct {
+	TickersConfig *config.Tickers
+}
 
-	res, err := httpclient.Get("https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1m&range=1d", headers)
+func (y YahooClient) Run(cron *cron.Cron) {
+	cron.AddFunc("yahoo-quote", "@every 10s", func() {
+		if err := y.GetQuotesData(); err != nil {
+			log.Println("Error fetching quotes data:", err)
+		}
+	})
+}
+
+func (y YahooClient) GetQuotesData() error {
+	var wg sync.WaitGroup
+
+	for _, symbol := range y.TickersConfig.Tickers {
+		wg.Add(1)
+		go func(sym string) {
+			defer wg.Done()
+			quote, err := y.getQuote(sym)
+			if err != nil {
+				log.Printf("Error fetching quote for %s: %v\n", sym, err)
+				return
+			}
+			log.Printf("Quote for %s: %s\n", sym, quote)
+		}(symbol)
+	}
+	wg.Wait()
+	return nil
+}
+
+func (y YahooClient) getQuote(symbol string) (string, error) {
+
+	res, err := httpclient.Get("https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1m&range=1d", httpclient.GetHeaders("https://finance.yahoo.com/"))
 	if err != nil {
 		log.Println("Error fetching quote:", err)
 		return "", err
@@ -27,11 +54,6 @@ func GetQuote(symbol string) (string, error) {
 		log.Println("Error unmarshaling response:", err)
 		return "", err
 	}
-	jsonBytes, err := json.MarshalIndent(news, "", "  ")
-	if err != nil {
-		log.Println("Error marshaling:", err)
-	} else {
-		fmt.Println(string(jsonBytes))
-	}
+
 	return "Quote for " + symbol, nil
 }
