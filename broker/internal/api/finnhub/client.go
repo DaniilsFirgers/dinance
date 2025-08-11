@@ -23,7 +23,7 @@ type FinnhubClient struct {
 }
 
 func (f FinnhubClient) Run(cron *cron.Cron) error {
-	cron.AddFunc("finnhub-company-news", "@every 10s", func() {
+	cron.AddFunc("finnhub-company-news", "@every 15m", func() {
 		if err := f.GetCompanyNews(); err != nil {
 			log.Println("Error fetching company news:", err)
 		}
