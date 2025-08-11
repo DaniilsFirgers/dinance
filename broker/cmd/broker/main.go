@@ -2,6 +2,7 @@ package main
 
 import (
 	finnhub "broker/internal/api/finnhub"
+	"broker/internal/api/yahoo"
 	"broker/internal/config"
 	"log"
 
@@ -33,9 +34,11 @@ func main() {
 	apiClient := finnhub_api.NewAPIClient(finnhub_cfg).DefaultApi
 
 	finnhub_client := finnhub.FinnhubClient{Client: apiClient, TickersConfig: tickers}
-
 	finnhub_client.Run(cron)
-	// yahoo.GetQuote("GOOGL")
+
+	yahoo_client := yahoo.YahooClient{TickersConfig: tickers}
+	yahoo_client.Run(cron)
+
 	// Keep the program running
 	select {}
 }
