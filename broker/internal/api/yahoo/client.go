@@ -3,6 +3,7 @@ package yahoo
 import (
 	"broker/internal/config"
 	cron "broker/internal/cron"
+	"fmt"
 	"sync"
 
 	httpclient "broker/internal/http-client"
@@ -42,15 +43,17 @@ func (y YahooClient) GetQuotesData() error {
 }
 
 func (y YahooClient) getQuote(symbol string) (string, error) {
+	headers := httpclient.GetHeaders("https://finance.yahoo.com/")
+	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1m&range=1d", symbol)
 
-	res, err := httpclient.Get("https://query1.finance.yahoo.com/v8/finance/chart/AAPL?interval=1m&range=1d", httpclient.GetHeaders("https://finance.yahoo.com/"))
+	res, err := httpclient.Get(url, headers)
 	if err != nil {
 		log.Println("Error fetching quote:", err)
 		return "", err
 	}
 
-	var news YahooSymbolOCHL
-	if err := json.Unmarshal(res, &news); err != nil {
+	var data YahooSymbolOCHL
+	if err := json.Unmarshal(res, &data); err != nil {
 		log.Println("Error unmarshaling response:", err)
 		return "", err
 	}
