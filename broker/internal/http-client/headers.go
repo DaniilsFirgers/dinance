@@ -36,9 +36,8 @@ func GetRandomUserAgent() string {
 func GetHeaders(referer string) map[string]string {
 	return map[string]string{
 		"User-Agent":      GetRandomUserAgent(),
-		"Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+		"Accept":          "application/json, text/plain, */*",
 		"Accept-Language": "en-US,en;q=0.5",
-		"Accept-Encoding": "gzip, deflate, br",
 		"Connection":      "keep-alive",
 		"Referer":         referer,
 	}
