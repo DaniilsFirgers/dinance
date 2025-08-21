@@ -5,6 +5,7 @@ import (
 	cron "broker/internal/cron"
 	"fmt"
 	"sync"
+	"time"
 
 	httpclient "broker/internal/http-client"
 	"encoding/json"
@@ -30,33 +31,31 @@ func (y YahooClient) GetQuotesData() error {
 		wg.Add(1)
 		go func(sym string) {
 			defer wg.Done()
-			quote, err := y.getQuote(sym)
+			data, err := y.getQuoteData(sym)
 			if err != nil {
 				log.Printf("Error fetching quote for %s: %v\n", sym, err)
 				return
 			}
-			log.Printf("Quote for %s: %s\n", sym, quote)
+			checkPriceVolumeTrend(data, 3*time.Hour, DEFAULT_WINDOW_COUNT)
 		}(symbol)
 	}
 	wg.Wait()
 	return nil
 }
 
-func (y YahooClient) getQuote(symbol string) (string, error) {
+func (y YahooClient) getQuoteData(symbol string) (YahooSymbolOCHL, error) {
 	headers := httpclient.GetHeaders("https://finance.yahoo.com/")
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1m&range=1d", symbol)
 
 	res, err := httpclient.Get(url, headers)
 	if err != nil {
-		log.Println("Error fetching quote:", err)
-		return "", err
+		return YahooSymbolOCHL{}, err
 	}
 
 	var data YahooSymbolOCHL
 	if err := json.Unmarshal(res, &data); err != nil {
-		log.Println("Error unmarshaling response:", err)
-		return "", err
+		return YahooSymbolOCHL{}, err
 	}
 
-	return "Quote for " + symbol, nil
+	return data, nil
 }
