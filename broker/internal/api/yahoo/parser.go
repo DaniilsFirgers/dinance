@@ -32,7 +32,7 @@ func checkPriceVolumeTrend(data YahooSymbolOCHL, cutoffTime time.Duration, windo
 		return
 	}
 
-	cutoff := time.Now().Add(cutoffTime).Unix()
+	cutoff := time.Now().Add(-cutoffTime).Unix()
 
 	var points []DinanceTsPoint
 
@@ -87,7 +87,7 @@ func computeWindowTrends(points []DinanceTsPoint, windows []time.Duration) {
 		}
 
 		priceChange := (latest.Close - past.Close) / past.Close * 100
-		volumeChange := (latest.Volume - past.Volume) / past.Volume * 100
+		volumeChange := (float64(latest.Volume) - float64(past.Volume)) / float64(past.Volume) * 100
 
 		log.Printf("Window %s: Price change: %.2f%%, Volume change: %.2f%%", window, priceChange, volumeChange)
 	}
