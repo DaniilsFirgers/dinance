@@ -63,7 +63,7 @@ type YahooSymbolOCHL struct {
 				Range           *string   `json:"range,omitempty"`
 				ValidRanges     []*string `json:"validRanges,omitempty"`
 			} `json:"meta"`
-			Timestamp  []*int `json:"timestamp,omitempty"`
+			Timestamp  []*int64 `json:"timestamp,omitempty"`
 			Indicators struct {
 				Quote []struct {
 					Close  []*float64 `json:"close,omitempty"`
