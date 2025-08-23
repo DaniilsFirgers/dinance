@@ -18,13 +18,13 @@ type YahooClient struct {
 
 func (y YahooClient) Run(cron *cron.Cron) {
 	cron.AddFunc("yahoo-quote", "@every 10s", func() {
-		if err := y.GetQuotesData(); err != nil {
+		if err := y.GetQuotesData(time.Hour * 3); err != nil {
 			log.Println("Error fetching quotes data:", err)
 		}
 	})
 }
 
-func (y YahooClient) GetQuotesData() error {
+func (y YahooClient) GetQuotesData(cutOffTime time.Duration) error {
 	var wg sync.WaitGroup
 
 	for _, symbol := range y.TickersConfig.Tickers {
@@ -36,7 +36,7 @@ func (y YahooClient) GetQuotesData() error {
 				log.Printf("Error fetching quote for %s: %v\n", sym, err)
 				return
 			}
-			checkPriceVolumeTrend(data, 3*time.Hour, DEFAULT_WINDOW_COUNT)
+			checkPriceVolumeTrend(data, cutOffTime, DEFAULT_WINDOW_COUNT)
 		}(symbol)
 	}
 	wg.Wait()
