@@ -11,44 +11,42 @@ const DEFAULT_WINDOW_COUNT = 5
 
 func checkPriceVolumeTrend(data YahooSymbolOCHL, cutoffTime time.Duration, windowsCount int) {
 	if data.Chart.Result == nil || len(data.Chart.Result) == 0 {
-		log.Println("No chart data available")
 		return
 	}
 
 	result := data.Chart.Result[0]
 	if result.Timestamp == nil || len(result.Timestamp) == 0 {
-		log.Printf("No timestamps available for symbol %s", *result.Meta.Symbol)
+		return
 	}
 
-	// Ensure we have at least one quote set
 	if result.Indicators.Quote == nil || len(result.Indicators.Quote) == 0 {
-		log.Printf("No quote data available for symbol %s", result.Meta.Symbol)
 		return
 	}
 
 	quote := result.Indicators.Quote[0]
 	if quote.Close == nil || quote.Volume == nil {
-		log.Printf("No close or volume data available for symbol %s", *result.Meta.Symbol)
 		return
 	}
 
-	cutoff := time.Now().Add(-cutoffTime).Unix()
+	cutoff := time.Now().Truncate(time.Minute).Add(-cutoffTime).Unix()
 
 	var points []DinanceTsPoint
 
 	for i, ts := range result.Timestamp {
 		if ts == nil {
-			log.Printf("Nil timestamp at index %d for symbol %s", i, *result.Meta.Symbol)
 			continue
 		}
 
 		if *ts < cutoff {
-			log.Printf("Skipping point for symbol %s at timestamp %d, before cutoff %d", *result.Meta.Symbol, *ts, cutoff)
 			continue
 		}
 
 		if quote.Close[i] == nil || quote.Volume[i] == nil {
-			log.Printf("Nil close or volume at index %d for symbol %s", i, *result.Meta.Symbol)
+			continue
+		}
+
+		// NOTE if volume is zero, we skip the point as we will give untruthworthy changes (highly unlikely to have zero volume in a valid quote)
+		if *quote.Volume[i] == 0 {
 			continue
 		}
 
@@ -88,6 +86,8 @@ func computeWindowTrends(points []DinanceTsPoint, windows []time.Duration) {
 
 		priceChange := (latest.Close - past.Close) / past.Close * 100
 		volumeChange := (float64(latest.Volume) - float64(past.Volume)) / float64(past.Volume) * 100
+		log.Printf("Volumes: %d -> %d", past.Volume, latest.Volume)
+		log.Printf("Prices: %.2f -> %.2f", past.Close, latest.Close)
 
 		log.Printf("Window %s: Price change: %.2f%%, Volume change: %.2f%%", window, priceChange, volumeChange)
 	}
