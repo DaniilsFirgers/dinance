@@ -1,9 +1,16 @@
 package yahoo
 
+import "time"
+
 type DinanceTsPoint struct {
-	Time   int64   `json:"time"`
-	Close  float64 `json:"close"`
-	Volume int64   `json:"volume"`
+	Time   time.Time `json:"time"`
+	Close  float64   `json:"close"`
+	Volume int64     `json:"volume"`
+}
+
+type DinanceTrendTsPoint struct {
+	DinanceTsPoint
+	CumulativeVolume int64 `json:"cumulative_volume"`
 }
 
 type YahooSymbolOCHL struct {
