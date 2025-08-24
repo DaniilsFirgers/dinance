@@ -18,7 +18,7 @@ type YahooClient struct {
 
 func (y YahooClient) Run(cron *cron.Cron) {
 	cron.AddFunc("yahoo-quote", "@every 10s", func() {
-		if err := y.GetQuotesData(time.Hour * 3); err != nil {
+		if err := y.GetQuotesData(time.Hour * 48); err != nil {
 			log.Println("Error fetching quotes data:", err)
 		}
 	})

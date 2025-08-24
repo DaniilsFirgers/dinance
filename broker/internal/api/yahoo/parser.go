@@ -9,7 +9,7 @@ import (
 const MINIMUM_WINDOW = 5 * time.Minute
 const DEFAULT_WINDOW_COUNT = 5
 
-func checkPriceVolumeTrend(data YahooSymbolOCHL, cutoffTime time.Duration, windowsCount int) {
+func checkPriceVolumeTrend(data YahooSymbolOCHL, maxWindow time.Duration, windowsCount int) {
 	if data.Chart.Result == nil || len(data.Chart.Result) == 0 {
 		return
 	}
@@ -28,16 +28,17 @@ func checkPriceVolumeTrend(data YahooSymbolOCHL, cutoffTime time.Duration, windo
 		return
 	}
 
-	cutoff := time.Now().Truncate(time.Minute).Add(-cutoffTime).Unix()
+	cutoff := time.Now().Truncate(time.Minute).Add(-maxWindow)
 
 	var points []DinanceTsPoint
-
+	// Timestamps are sorted in from oldest to newest, so we can iterate through them
 	for i, ts := range result.Timestamp {
 		if ts == nil {
 			continue
 		}
 
-		if *ts < cutoff {
+		timestamp := time.Unix(*ts, 0).Truncate(time.Minute).UTC()
+		if timestamp.Before(cutoff) {
 			continue
 		}
 
@@ -51,7 +52,7 @@ func checkPriceVolumeTrend(data YahooSymbolOCHL, cutoffTime time.Duration, windo
 		}
 
 		points = append(points, DinanceTsPoint{
-			Time:   *ts,
+			Time:   timestamp,
 			Close:  *quote.Close[i],
 			Volume: *quote.Volume[i],
 		})
@@ -61,55 +62,69 @@ func checkPriceVolumeTrend(data YahooSymbolOCHL, cutoffTime time.Duration, windo
 		log.Printf("No valid points found for symbol %s", *result.Meta.Symbol)
 		return
 	}
-	windows := deriveWindows(cutoffTime, MINIMUM_WINDOW, windowsCount)
-	computeWindowTrends(points, windows)
+	computeWindowTrends(points, maxWindow)
 }
 
-func computeWindowTrends(points []DinanceTsPoint, windows []time.Duration) {
+func computeWindowTrends(points []DinanceTsPoint, maxWindow time.Duration) {
 	latest := points[len(points)-1]
 
-	for _, window := range windows {
-		ago := latest.Time - int64(window.Seconds())
+	windows := deriveWindowSteps(maxWindow, MINIMUM_WINDOW, DEFAULT_WINDOW_COUNT, latest.Time)
+	for w, _ := range windows {
+		log.Printf("Window: %s", w.Format(time.RFC3339))
+	}
+	var targets []DinanceTrendTsPoint
+	cumulativeVolume := int64(0)
 
-		var past *DinanceTsPoint
-		for _, p := range points {
-			if p.Time >= ago {
-				past = &p
-				break
-			}
+	for _, p := range points {
+		cumulativeVolume += p.Volume
+
+		if _, exists := windows[p.Time]; exists {
+			targets = append(targets, DinanceTrendTsPoint{
+				DinanceTsPoint: DinanceTsPoint{
+					Time:   p.Time,
+					Close:  p.Close,
+					Volume: p.Volume,
+				},
+				CumulativeVolume: cumulativeVolume,
+			})
+
+			delete(windows, p.Time)
+			break
 		}
+	}
 
-		if past == nil {
-			log.Printf("No past point found for window %s", window)
-			continue
-		}
-
-		priceChange := (latest.Close - past.Close) / past.Close * 100
-		volumeChange := (float64(latest.Volume) - float64(past.Volume)) / float64(past.Volume) * 100
-		log.Printf("Volumes: %d -> %d", past.Volume, latest.Volume)
-		log.Printf("Prices: %.2f -> %.2f", past.Close, latest.Close)
-
-		log.Printf("Window %s: Price change: %.2f%%, Volume change: %.2f%%", window, priceChange, volumeChange)
+	if len(targets) == 0 {
+		return
+	}
+	for _, target := range targets {
+		priceChange := (latest.Close - target.Close) / target.Close * 100
+		avgVolume := float64(target.CumulativeVolume) / latest.Time.Sub(target.Time).Minutes()
+		volumeRatio := float64(latest.Volume) / avgVolume
+		log.Printf("Window %s: Price change: %.2f%%, Volume ratio: %.2f", target.Time.Format(time.RFC3339), priceChange, volumeRatio)
 	}
 }
 
-func deriveWindows(cuttOff, min time.Duration, count int) []time.Duration {
+func deriveWindowSteps(maxDuration, minDuration time.Duration, count int, targetTime time.Time) map[time.Time]struct{} {
 	if count <= 0 {
 		return nil
 	}
 
-	if cuttOff < min {
+	if maxDuration < minDuration {
 		return nil
 	}
 
-	windows := make([]time.Duration, count)
-	ratio := float64(cuttOff) / float64(min)
+	windowSteps := make(map[time.Time]struct{}, count)
+	ratio := float64(maxDuration) / float64(minDuration)
 	step := math.Pow(ratio, 1/float64(count-1))
 
-	cur := float64(min)
+	currDuration := minDuration
 	for i := 0; i < count; i++ {
-		windows[i] = time.Duration(cur).Round(time.Minute)
-		cur *= step
+		stepTime := targetTime.Add(-currDuration)
+		if _, exists := windowSteps[stepTime]; !exists {
+			windowSteps[stepTime] = struct{}{}
+		}
+
+		currDuration = time.Duration(float64(currDuration) * step)
 	}
-	return windows
+	return windowSteps
 }
