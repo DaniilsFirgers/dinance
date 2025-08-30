@@ -2,13 +2,29 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Analytics module",
+      "name": "Debug Analytics Module",
       "type": "python",
       "request": "launch",
       "module": "app.main",
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}/analytics",
       "envFile": "${workspaceFolder}/analytics/.env"
+    },
+    {
+      "name": "Debug Broker",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/broker/cmd/broker",
+      "cwd": "${workspaceFolder}/broker" 
+    },
+    {
+      "name": "Debug Scripts",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/broker/cmd/scripts",
+      "cwd": "${workspaceFolder}/broker" 
     }
   ]
 }
