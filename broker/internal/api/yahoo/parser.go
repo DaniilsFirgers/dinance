@@ -11,29 +11,32 @@ import (
 const MINIMUM_DURATION = 3 * time.Minute
 const DEFAULT_WINDOW_COUNT = 5
 
-func checkPriceVolumeTrend(data YahooSymbolOCHL, maxDuration time.Duration) {
+func checkPriceVolumeTrend(data YahooSymbolOCHL, start, end time.Time, maxDuration time.Duration) error {
 	if data.Chart.Result == nil || len(data.Chart.Result) == 0 {
-		return
+		return fmt.Errorf("no results found")
 	}
 
 	result := data.Chart.Result[0]
 	if result.Timestamp == nil || len(result.Timestamp) == 0 {
-		return
+		return fmt.Errorf("no timestamps found in result for symbol %s", *result.Meta.Symbol)
 	}
 
 	if result.Indicators.Quote == nil || len(result.Indicators.Quote) == 0 {
-		return
+		return fmt.Errorf("no quote indicators found in result for symbol %s", *result.Meta.Symbol)
 	}
 
 	quote := result.Indicators.Quote[0]
 	if quote.Close == nil || quote.Volume == nil {
-		return
+		return fmt.Errorf("no close or volume data found in result for symbol %s", *result.Meta.Symbol)
 	}
+
+	dinance_math.ReverseSlicePtr(result.Timestamp)
+	dinance_math.ReverseSlicePtr(result.Indicators.Quote[0].Volume)
+	dinance_math.ReverseSlicePtr(result.Indicators.Quote[0].Close)
 
 	startIndex, err := findStartingOchlTimeSeriesIndex(result)
 	if err != nil {
-		log.Printf("Error finding starting index for symbol %s: %v", *result.Meta.Symbol, err)
-		return
+		return err
 	}
 
 	var timeSeriesArray = result.Timestamp[startIndex:]
@@ -85,8 +88,7 @@ func checkPriceVolumeTrend(data YahooSymbolOCHL, maxDuration time.Duration) {
 	}
 
 	if len(targets) == 0 {
-		log.Printf("No valid targets formed for symbol %s", *result.Meta.Symbol)
-		return
+		return fmt.Errorf("no valid targets formed for symbol %s", *result.Meta.Symbol)
 	}
 
 	for _, target := range targets {
@@ -95,7 +97,7 @@ func checkPriceVolumeTrend(data YahooSymbolOCHL, maxDuration time.Duration) {
 		volumeRatio := float64(*closeVolume) / avgVolume
 		fmt.Printf("Window: %s,Cum volume: %d, Avg window volume: %.2f, Duration: %f, Price change: %.2f%%, Volume ratio: %.2f\n", target.Time.Format(time.RFC3339), target.CumulativeVolume, avgVolume, target.Duration.Minutes(), priceChange, volumeRatio)
 	}
-
+	return nil
 }
 
 func deriveWindowSteps(maxDuration, minDuration time.Duration, count int, targetTime time.Time) map[time.Time]struct{} {
@@ -125,17 +127,12 @@ func deriveWindowSteps(maxDuration, minDuration time.Duration, count int, target
 
 func findStartingOchlTimeSeriesIndex(timeSeries YahooSymbolOCHLResult) (int, error) {
 
-	dinance_math.ReverseSlicePtr(timeSeries.Timestamp)
-	dinance_math.ReverseSlicePtr(timeSeries.Indicators.Quote[0].Volume)
-	dinance_math.ReverseSlicePtr(timeSeries.Indicators.Quote[0].Close)
-
 	var validTsIndex int
 	// iterate over timestamp to find first vaid volume and price
 	for i, ts := range timeSeries.Timestamp {
 		if ts == nil {
 			continue
 		}
-		fmt.Printf("Index: %d\n", i)
 
 		if timeSeries.Indicators.Quote[0].Volume[i] != nil && *timeSeries.Indicators.Quote[0].Volume[i] > 0 &&
 			timeSeries.Indicators.Quote[0].Close[i] != nil && *timeSeries.Indicators.Quote[0].Close[i] > 0 {
