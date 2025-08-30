@@ -1,7 +1,10 @@
 package config
 
 type Tickers struct {
-	Tickers []string `json:"tickers"` // List of stock tickers.
+	Tickers struct {
+		US []string `json:"us"`
+		EU []string `json:"eu"`
+	} `json:"tickers"`
 }
 
 type Config struct {

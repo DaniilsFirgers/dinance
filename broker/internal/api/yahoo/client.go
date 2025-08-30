@@ -17,8 +17,7 @@ type YahooClient struct {
 }
 
 func (y YahooClient) Run(cron *cron.Cron) {
-
-	job := func() {
+	job := func(region Region) {
 		periodStart := time.Now().UTC().Truncate(time.Minute)
 		start, end, err := getRequestPeriods(periodStart, 6*time.Hour)
 		if err != nil {
@@ -27,35 +26,52 @@ func (y YahooClient) Run(cron *cron.Cron) {
 		}
 
 		maxDuration := getWindowMaxDuration(start, end, 6*time.Hour)
-		if err := y.GetQuotesData(start, end, maxDuration); err != nil {
+		if err := y.GetQuotesData(region, start, end, maxDuration); err != nil {
 			log.Println("Error fetching quotes data:", err)
 		}
 	}
 
-	// First cron: 10:00–17:59 EET, every 2 minutes
-	cron.AddFunc("yahoo-quote-part-one", "0-59/2 10-17 * * 1-5", job)
-	// Second cron: 18:00–18:30 EET, every 2 minutes
-	cron.AddFunc("yahoo-quote-part-two", "0-30/2 18 * * 1-5", job)
+	// First cron: 10:00–17:59 EET, every 2 minutes for EU region
+	cron.AddFunc("yahoo-quote-part-one", "0-59/2 10-17 * * 1-5", func() {
+		job(EU)
+	})
+	// Second cron: 18:00–18:30 EET, every 2 minutes for EU region
+	cron.AddFunc("yahoo-quote-part-two", "0-30/2 18 * * 1-5", func() {
+		job(EU)
+	})
 }
 
-func (y YahooClient) GetQuotesData(start, end time.Time, maxDuration time.Duration) error {
-	var wg sync.WaitGroup
+func (y YahooClient) GetQuotesData(region Region, start, end time.Time, maxDuration time.Duration) error {
 
-	for _, symbol := range y.TickersConfig.Tickers {
-		wg.Add(1)
-		go func(sym string) {
-			defer wg.Done()
-			data, err := y.GetQuoteData(sym, start, end)
-			if err != nil {
-				log.Printf("Error fetching quote for %s: %v\n", sym, err)
-				return
-			}
-			if err := checkPriceVolumeTrend(data, start, end, maxDuration); err != nil {
-				log.Printf("Error checking price volume trend for %s: %v\n", sym, err)
-			}
-		}(symbol)
+	parser := func(tickers []string) {
+		var wg sync.WaitGroup
+
+		for _, ticker := range tickers {
+			wg.Add(1)
+			go func(sym string) {
+				defer wg.Done()
+				data, err := y.GetQuoteData(sym, start, end)
+				if err != nil {
+					log.Printf("Error fetching quote for %s: %v\n", sym, err)
+					return
+				}
+				if err := checkPriceVolumeTrend(data, start, end, maxDuration); err != nil {
+					log.Printf("Error checking price volume trend for %s: %v\n", sym, err)
+				}
+			}(ticker)
+		}
+		wg.Wait()
 	}
-	wg.Wait()
+
+	switch region {
+	case US:
+		parser(y.TickersConfig.Tickers.US)
+	case EU:
+		parser(y.TickersConfig.Tickers.EU)
+	default:
+		return fmt.Errorf("unsupported region: %s", region)
+	}
+
 	return nil
 }
 

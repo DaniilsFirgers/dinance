@@ -36,7 +36,9 @@ func (f FinnhubClient) GetCompanyNews() error {
 	from := time.Now().Format(REQUEST_DATE_FORMAT)
 	to := time.Now().Format(REQUEST_DATE_FORMAT)
 
-	for _, symbol := range f.TickersConfig.Tickers {
+	tickers := append(f.TickersConfig.Tickers.EU, f.TickersConfig.Tickers.US...)
+
+	for _, ticker := range tickers {
 		wg.Add(1)
 		go func(sym string) {
 			defer wg.Done()
@@ -46,15 +48,12 @@ func (f FinnhubClient) GetCompanyNews() error {
 				return
 			}
 			fmt.Printf("Length of news for %s: %d\n", sym, len(res))
-		}(symbol)
+		}(ticker)
 	}
 	wg.Wait()
 	return nil
 }
 
 func (f FinnhubClient) GetMarketNews() error {
-	// from := time.Now().Format(REQUEST_DATE_FORMAT)
-	// to := time.Now().Format(REQUEST_DATE_FORMAT)
-
 	return nil
 }

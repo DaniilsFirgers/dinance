@@ -2,6 +2,8 @@ package yahoo
 
 import "time"
 
+type Region string
+
 type DinanceTsPoint struct {
 	Time   time.Time `json:"time"`
 	Close  float64   `json:"close"`
