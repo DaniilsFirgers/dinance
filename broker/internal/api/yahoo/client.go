@@ -17,25 +17,29 @@ type YahooClient struct {
 }
 
 func (y YahooClient) Run(cron *cron.Cron) {
-	if err := y.GetQuotesData(time.Hour * 6); err != nil {
-		log.Println("Error fetching quotes data:", err)
+
+	job := func() {
+		periodStart := time.Now().UTC().Truncate(time.Minute)
+		start, end, err := getRequestPeriods(periodStart, 6*time.Hour)
+		if err != nil {
+			log.Printf("Error getting request periods: %v", err)
+			return
+		}
+
+		maxDuration := getWindowMaxDuration(start, end, 6*time.Hour)
+		if err := y.GetQuotesData(start, end, maxDuration); err != nil {
+			log.Println("Error fetching quotes data:", err)
+		}
 	}
-	// cron.AddFunc("yahoo-quote", "@every 10s", func() {
-	// 	if err := y.GetQuotesData(time.Hour * 3); err != nil {
-	// 		log.Println("Error fetching quotes data:", err)
-	// 	}
-	// })
+
+	// First cron: 10:00–17:59 EET, every 2 minutes
+	cron.AddFunc("yahoo-quote-part-one", "0-59/2 10-17 * * 1-5", job)
+	// Second cron: 18:00–18:30 EET, every 2 minutes
+	cron.AddFunc("yahoo-quote-part-two", "0-30/2 18 * * 1-5", job)
 }
 
-func (y YahooClient) GetQuotesData(maxDuration time.Duration) error {
+func (y YahooClient) GetQuotesData(start, end time.Time, maxDuration time.Duration) error {
 	var wg sync.WaitGroup
-
-	periodStart := time.Now().UTC().Truncate(time.Minute)
-	start, end, err := getRequestPeriods(periodStart, maxDuration)
-	if err != nil {
-		return fmt.Errorf("failed to get request periods: %w", err)
-	}
-	windowMaxDuration := getWindowMaxDuration(start, end, maxDuration)
 
 	for _, symbol := range y.TickersConfig.Tickers {
 		wg.Add(1)
@@ -46,7 +50,9 @@ func (y YahooClient) GetQuotesData(maxDuration time.Duration) error {
 				log.Printf("Error fetching quote for %s: %v\n", sym, err)
 				return
 			}
-			checkPriceVolumeTrend(data, windowMaxDuration)
+			if err := checkPriceVolumeTrend(data, start, end, maxDuration); err != nil {
+				log.Printf("Error checking price volume trend for %s: %v\n", sym, err)
+			}
 		}(symbol)
 	}
 	wg.Wait()
