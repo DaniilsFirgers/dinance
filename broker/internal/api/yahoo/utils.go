@@ -17,7 +17,7 @@ func getWindowMaxDuration(start, end time.Time, requestedMaxPeriod time.Duration
 func getRequestPeriods(periodEnd time.Time, windowLength time.Duration) (from, to time.Time, err error) {
 	open, close, error := market.GetMarketHours()
 	if error != nil {
-		return time.Time{}, time.Time{}, fmt.Errorf("failed to get market hours: %w", error)
+		return time.Time{}, time.Time{}, error
 	}
 
 	if periodEnd.After(close) {
