@@ -13,10 +13,17 @@ type Cron struct {
 }
 
 func New() *Cron {
+	loc, err := time.LoadLocation("Europe/Riga") // Riga timezone
+	if err != nil {
+		log.Fatalf("failed to load timezone: %v", err)
+	}
 	return &Cron{
-		cron: cron.New(cron.WithSeconds(), cron.WithChain(
-			cron.SkipIfStillRunning(cron.DefaultLogger),
-		)),
+		cron: cron.New(
+			cron.WithLocation(loc),
+			cron.WithSeconds(),
+			cron.WithChain(
+				cron.SkipIfStillRunning(cron.DefaultLogger),
+			)),
 	}
 }
 
