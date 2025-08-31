@@ -8,8 +8,13 @@ import (
 	"time"
 
 	httpclient "broker/internal/http-client"
+	market "broker/internal/market"
 	"encoding/json"
 	"log"
+)
+
+const (
+	DEFAULT_WINDOW_LENGTH = 3 * time.Hour
 )
 
 type YahooClient struct {
@@ -17,31 +22,41 @@ type YahooClient struct {
 }
 
 func (y YahooClient) Run(cron *cron.Cron) {
-	job := func(region Region) {
+	job := func(exchange market.Exchange, requestPeriod time.Duration) {
 		periodStart := time.Now().UTC().Truncate(time.Minute)
-		start, end, err := getRequestPeriods(periodStart, 6*time.Hour)
+		start, end, err := getRequestPeriods(exchange, periodStart, requestPeriod)
 		if err != nil {
 			log.Printf("Error getting request periods: %v", err)
 			return
 		}
 
-		maxDuration := getWindowMaxDuration(start, end, 6*time.Hour)
-		if err := y.GetQuotesData(region, start, end, maxDuration); err != nil {
+		maxDuration := getWindowMaxDuration(start, end, requestPeriod)
+		if err := y.GetQuotesData(exchange, start, end, maxDuration); err != nil {
 			log.Println("Error fetching quotes data:", err)
 		}
 	}
 
 	// First cron: 10:00–17:59 EET, every 2 minutes for EU region
 	cron.AddFunc("yahoo-quote-part-one", "0-59/2 10-17 * * 1-5", func() {
-		job(EU)
+		job(market.EU, DEFAULT_WINDOW_LENGTH)
 	})
 	// Second cron: 18:00–18:30 EET, every 2 minutes for EU region
 	cron.AddFunc("yahoo-quote-part-two", "0-30/2 18 * * 1-5", func() {
-		job(EU)
+		job(market.EU, DEFAULT_WINDOW_LENGTH)
+	})
+
+	// Third cron: 16:30–16:59 EET, every 2 minutes for US region
+	cron.AddFunc("yahoo-quote-part-three", "30-59/2 16 * * 1-5", func() {
+		job(market.US, time.Minute*30) // Shorter window for the first half hour
+	})
+
+	// Fourth cron: 17:00-22:59 EET, every 2 minutes for US region
+	cron.AddFunc("yahoo-quote-part-four", "*/2 17-22 * * 1-5", func() {
+		job(market.US, DEFAULT_WINDOW_LENGTH)
 	})
 }
 
-func (y YahooClient) GetQuotesData(region Region, start, end time.Time, maxDuration time.Duration) error {
+func (y YahooClient) GetQuotesData(exchange market.Exchange, start, end time.Time, maxDuration time.Duration) error {
 
 	parser := func(tickers []string) {
 		var wg sync.WaitGroup
@@ -63,13 +78,13 @@ func (y YahooClient) GetQuotesData(region Region, start, end time.Time, maxDurat
 		wg.Wait()
 	}
 
-	switch region {
-	case US:
+	switch exchange {
+	case market.US:
 		parser(y.TickersConfig.Tickers.US)
-	case EU:
+	case market.EU:
 		parser(y.TickersConfig.Tickers.EU)
 	default:
-		return fmt.Errorf("unsupported region: %s", region)
+		return fmt.Errorf("unsupported region: %s", exchange)
 	}
 
 	return nil
