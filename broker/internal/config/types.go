@@ -9,10 +9,15 @@ type Tickers struct {
 
 type Config struct {
 	App struct {
-		Name string
-		Env  string
-	}
+		Name string `json:"name"`
+		Env  string `json:"env"`
+	} `json:"app"`
 	Finnhub struct {
-		Token string
-	}
+		Token string `json:"token"`
+	} `json:"finnhub"`
+	Configurations struct {
+		Trend struct {
+			VolumeRatio int `json:"volume_ratio"`
+		}
+	} `json:"configurations"`
 }
