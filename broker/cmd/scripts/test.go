@@ -22,7 +22,7 @@ func main() {
 	end := time.Date(2025, time.August, 29, 19, 0, 0, 0, time.UTC)
 	fmt.Printf("Fetching quotes data from %s to %s\n", start, end)
 
-	if err := yahooClient.GetQuotesData(market.EU, start, end, (3 * time.Hour)); err != nil {
+	if err := yahooClient.GetQuotesData(market.US, start, end, (3 * time.Hour)); err != nil {
 		log.Println("Error fetching quotes data:", err)
 	}
 }
