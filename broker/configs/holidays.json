@@ -1,0 +1,151 @@
+{
+  "us": [
+    {
+      "event_name": "Christmas Day",
+      "date": "2026-12-25",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Christmas Day",
+      "date": "2026-12-24",
+      "trading_hour": "09:30-13:00"
+    },
+    {
+      "event_name": "Thanksgiving Day",
+      "date": "2026-11-27",
+      "trading_hour": "09:30-13:00"
+    },
+    {
+      "event_name": "Thanksgiving Day",
+      "date": "2026-11-26",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Labor Day",
+      "date": "2026-09-07",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Independence Day",
+      "date": "2026-07-03",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Juneteenth",
+      "date": "2026-06-19",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Memorial Day",
+      "date": "2026-05-25",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Good Friday",
+      "date": "2026-04-03",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Washington's Birthday",
+      "date": "2026-02-16",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Birthday of Martin Luther King, Jr",
+      "date": "2026-01-19",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "New Year's Day",
+      "date": "2026-01-01",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Christmas",
+      "date": "2025-12-25",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Christmas",
+      "date": "2025-12-24",
+      "trading_hour": "09:30-13:00"
+    },
+    {
+      "event_name": "Thanksgiving Day",
+      "date": "2025-11-28",
+      "trading_hour": "09:30-13:00"
+    },
+    {
+      "event_name": "Thanksgiving Day",
+      "date": "2025-11-27",
+      "trading_hour": ""
+    }
+  ],
+  "eu": [
+    {
+      "event_name": "Christmas Eve",
+      "date": "2025-12-24",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Christmas",
+      "date": "2025-12-25",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Boxing Day",
+      "date": "2025-12-26",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Half day",
+      "date": "2025-12-30",
+      "trading_hour": "08:00-13:00"
+    },
+    {
+      "event_name": "New Year's Eve",
+      "date": "2025-12-31",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "New Year's Day",
+      "date": "2026-01-01",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Good Friday",
+      "date": "2026-04-03",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Easter Monday",
+      "date": "2026-04-06",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Labour Day",
+      "date": "2026-05-01",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Christmas Eve",
+      "date": "2026-12-24",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Christmas",
+      "date": "2026-12-25",
+      "trading_hour": ""
+    },
+    {
+      "event_name": "Half day",
+      "date": "2026-12-30",
+      "trading_hour": "08:00-13:00"
+    },
+    {
+      "event_name": "New Year's Eve",
+      "date": "2026-12-31",
+      "trading_hour": ""
+    }
+  ]
+}
