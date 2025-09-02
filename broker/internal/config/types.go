@@ -15,9 +15,11 @@ type Config struct {
 	Finnhub struct {
 		Token string `json:"token"`
 	} `json:"finnhub"`
-	Configurations struct {
-		Trend struct {
-			VolumeRatio int `json:"volume_ratio"`
-		}
-	} `json:"configurations"`
+	Settings ConfigSettings `json:"settings"`
+}
+
+type ConfigSettings struct {
+	Trend struct {
+		VolumeRatio int `json:"volume_ratio"`
+	} `json:"trend"`
 }
