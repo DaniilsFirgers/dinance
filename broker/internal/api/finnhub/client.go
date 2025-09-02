@@ -2,6 +2,7 @@ package finnhub
 
 import (
 	"broker/internal/config"
+	"broker/internal/market"
 	"context"
 	"fmt"
 	"log"
@@ -18,8 +19,9 @@ const (
 )
 
 type FinnhubClient struct {
-	Client        *finnhub.DefaultApiService
-	TickersConfig *config.Tickers
+	Client         *finnhub.DefaultApiService
+	TickersConfig  *config.Tickers
+	MarketHolidays *market.MarketHolidays
 }
 
 func (f FinnhubClient) Run(cron *cron.Cron) error {

@@ -18,7 +18,8 @@ const (
 )
 
 type YahooClient struct {
-	TickersConfig *config.Tickers
+	TickersConfig  *config.Tickers
+	MarketHolidays *market.MarketHolidays
 }
 
 func (y YahooClient) Run(cron *cron.Cron) {
