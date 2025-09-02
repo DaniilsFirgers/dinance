@@ -25,7 +25,7 @@ type YahooClient struct {
 func (y YahooClient) Run(cron *cron.Cron) {
 	job := func(exchange market.Exchange, requestPeriod time.Duration) {
 		periodStart := time.Now().UTC().Truncate(time.Minute)
-		start, end, err := getRequestPeriods(exchange, periodStart, requestPeriod)
+		start, end, err := getRequestPeriods(exchange, periodStart, requestPeriod, y.MarketHolidays)
 		if err != nil {
 			log.Printf("Error getting request periods: %v", err)
 			return
@@ -93,7 +93,6 @@ func (y YahooClient) GetQuotesData(exchange market.Exchange, start, end time.Tim
 
 func (y YahooClient) GetQuoteData(symbol string, startTime, endTime time.Time) (YahooSymbolOCHL, error) {
 	headers := httpclient.GetHeaders("https://finance.yahoo.com/")
-	fmt.Printf("Fetching data for symbol: %s from %s to %s\n", symbol, startTime.Unix(), endTime.Unix())
 	url := fmt.Sprintf("https://query1.finance.yahoo.com/v8/finance/chart/%s?interval=1m&range=1d&period1=%d&period2=%d", symbol, startTime.Unix(), endTime.Unix())
 
 	res, err := httpclient.Get(url, headers)
