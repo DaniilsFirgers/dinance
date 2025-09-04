@@ -25,7 +25,7 @@ type YahooClient struct {
 func (y YahooClient) Run(cron *cron.Cron) {
 	job := func(exchange market.Exchange, requestPeriod time.Duration) {
 		periodStart := time.Now().UTC().Truncate(time.Minute)
-		start, end, err := getRequestPeriods(exchange, periodStart, requestPeriod, y.MarketHolidays)
+		start, end, err := market.GetValidTradingPeriod(exchange, periodStart, requestPeriod, y.MarketHolidays)
 		if err != nil {
 			log.Printf("Error getting request periods: %v", err)
 			return
