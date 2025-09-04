@@ -2,6 +2,7 @@ package market
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 )
@@ -32,7 +33,7 @@ func (m *MarketHolidays) holidaysForExchange(exchange Exchange) []HolidayRecord 
 	case EU:
 		return m.EU
 	default:
-		return nil
+		return []HolidayRecord{} // Return empty slice for unsupported exchanges
 	}
 }
 
@@ -45,4 +46,28 @@ func (m *MarketHolidays) IsHoliday(exchange Exchange, date time.Time) bool {
 		}
 	}
 	return false
+}
+
+func GetValidTradingPeriod(exchange Exchange, start time.Time, windowLength time.Duration, marketHolidays *MarketHolidays) (from, to time.Time, err error) {
+	open, close, err := GetMarketHours(exchange)
+	if err != nil {
+		return time.Time{}, time.Time{}, err
+	}
+
+	if start.After(close) {
+		return time.Time{}, time.Time{}, fmt.Errorf("period end %s is after market close %s", start, close)
+	}
+
+	isHoliday := marketHolidays.IsHoliday(exchange, start)
+	if isHoliday {
+		return time.Time{}, time.Time{}, fmt.Errorf("the date %s is a holiday for exchange %s", start.Format("2006-01-02"), exchange)
+	}
+
+	end := start.Add(-windowLength)
+
+	if end.Before(open) {
+		end = open
+	}
+
+	return end, start, nil
 }
