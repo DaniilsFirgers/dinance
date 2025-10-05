@@ -7,8 +7,8 @@
         "incremental": true, // enable incremental compilation for faster builds ( will use .tsbuildinfo files )
         "skipLibCheck": true, // skip type checking of all declaration files (.d.ts)
         "forceConsistentCasingInFileNames": true, // ensure that file names are case-consistent
-        "module": "esnext", // use esnext module system
-        "moduleResolution": "nodenext", // use nodenext module resolution strategy
+        "module": "nodenext", // use nodenext module system (controls how typescript code is compiled)
+        "moduleResolution": "nodenext", // use nodenext module resolution strategy (how import are found - import foo from "bar")
         "target": "es2020", // target modern JavaScript version
         "strict": true, // enable all strict type-checking options
     }
