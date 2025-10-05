@@ -3,6 +3,7 @@
     "compilerOptions": {
         "rootDir": "src",
         "outDir": "dist",
+        "composite": true, // explicitly set to true for project references
         "tsBuildInfoFile": "dist/.tsbuildinfo",
     },
     "include": ["src"],
