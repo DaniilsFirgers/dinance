@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "composite": true, // required in monorepo for project references
+        "declaration": true, // generate .d.ts files
+        "esModuleInterop": true, // allow default imports from CommonJS modules ( like express )
+        "declarationMap": true, // generate .d.ts.map files for easier debugging
+        "incremental": true, // enable incremental compilation for faster builds ( will use .tsbuildinfo files )
+        "skipLibCheck": true, // skip type checking of all declaration files (.d.ts)
+        "forceConsistentCasingInFileNames": true, // ensure that file names are case-consistent
+        "module": "esnext", // use esnext module system
+        "moduleResolution": "nodenext", // use nodenext module resolution strategy
+        "target": "es2020", // target modern JavaScript version
+        "strict": true, // enable all strict type-checking options
+    }
+}
