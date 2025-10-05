@@ -1,0 +1,16 @@
+{
+  "name": "@dinance/api",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@dinance/shared": "workspace:*"
+  },
+  "author": "dfirger@gmail.com",
+  "license": "ISC"
+}
