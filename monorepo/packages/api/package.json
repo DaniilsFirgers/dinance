@@ -4,13 +4,14 @@
   "private": false,
   "type": "module",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist .tsbuildinfo"
   },
   "dependencies": {
     "@dinance/shared": "workspace:*"
   },
-  "author": "dfirger@gmail.com",
+  "author": "daniils",
   "license": "ISC"
 }
