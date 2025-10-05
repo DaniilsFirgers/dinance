@@ -57,3 +57,8 @@ Then if `@dinance/api` depends on `@dinance/shared`, `package.json` of api will 
 ### Root pnpm-workspace.yaml
 
 - Tells pnpm **exactly where to look for workspace packages**
+
+### Packages tsconfig.json
+
+- Should have `"composite": true` included, as it allows for incremental builds and dependency tracking.
+- See other suggested properties in `monorepo/tsconfig.base.json`
