@@ -1,12 +1,18 @@
 {
   "name": "@dinance/shared",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "tsc -b",
+    "clean": "rm -rf dist .tsbuildinfo"
   },
-  "keywords": [],
-  "author": "",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "author": "daniils",
   "license": "ISC"
 }
