@@ -8,7 +8,10 @@
   ],
   "main": "index.js",
   "scripts": {
-    "build": "pnpm -r run build"
+    "build": "pnpm tsc -b --watch"
   },
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
 }
