@@ -1,3 +1,4 @@
-import { printMessage } from "@dinance/shared";
+import { printMessage, anotherFunction } from "@dinance/shared";
 
-printMessage("Hello from API");
+printMessage("Hello from API 1");
+anotherFunction();
