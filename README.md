@@ -62,3 +62,13 @@ Then if `@dinance/api` depends on `@dinance/shared`, `package.json` of api will 
 
 - Should have `"composite": true` included, as it allows for incremental builds and dependency tracking.
 - See other suggested properties in `monorepo/tsconfig.base.json`
+
+### Scripts
+
+```
+pnpm exec tsc -b --watch
+```
+
+- `pnpm exec` runs binary installed in the workspace (tsc -> Typescript compiler)
+- `-b` is **build mode** (project references). It looks at `tsconfig.json` files with `references` and builds in corect order.
+- `watch` Typescript runs in **watch mode**. Watches all referenced projects for changes and automatically recompiles .ts to .js
