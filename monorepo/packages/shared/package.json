@@ -5,6 +5,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
+    "dev": "tsx -b watch",
     "clean": "rm -rf dist .tsbuildinfo"
   },
   "exports": {
